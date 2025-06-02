@@ -1,15 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted } from 'vue';
 import StatCard from '../components/StatCard.vue';
 import BarChart from '../components/charts/BarChart.vue';
 import LineChart from '../components/charts/LineChart.vue';
-import { dashboardStats, dailyOrderData, trendAnalysisData, deliveryRoutes, notifications } from '../data/mockData';
+import { dashboardStats, notifications } from '../data/mockData';
+import { useDashboardStore } from '../stores/dashboard';
 
-const activeTab = ref('周');
+const dashboardStore = useDashboardStore()
 
-const toggleTab = (tab: string) => {
-  activeTab.value = tab;
+const toggleTab = (tab: '周' | '天') => {
+  dashboardStore.toggleTimeFrame(tab)
 };
+
+onMounted(() => {
+  dashboardStore.updateRoutes()
+})
 </script>
 
 <template>
@@ -28,22 +33,22 @@ const toggleTab = (tab: string) => {
         <div class="chart-header">
           <h2>数据分析</h2>
           <div class="tab-buttons">
-            <button :class="{ active: activeTab === '周' }" @click="toggleTab('周')">周</button>
-            <button :class="{ active: activeTab === '天' }" @click="toggleTab('天')">天</button>
+            <button :class="{ active: dashboardStore.currentTimeFrame === '周' }" @click="toggleTab('周')">周</button>
+            <button :class="{ active: dashboardStore.currentTimeFrame === '天' }" @click="toggleTab('天')">天</button>
           </div>
         </div>
-        <BarChart :chartData="dailyOrderData" />
+        <BarChart :chartData="dashboardStore.getCurrentOrderData()" />
       </div>
       
       <div class="chart-card">
         <div class="chart-header">
           <h2>趋势分析</h2>
           <div class="tab-buttons">
-            <button :class="{ active: activeTab === '周' }" @click="toggleTab('周')">周</button>
-            <button :class="{ active: activeTab === '天' }" @click="toggleTab('天')">天</button>
+            <button :class="{ active: dashboardStore.currentTimeFrame === '周' }" @click="toggleTab('周')">周</button>
+            <button :class="{ active: dashboardStore.currentTimeFrame === '天' }" @click="toggleTab('天')">天</button>
           </div>
         </div>
-        <LineChart :chartData="trendAnalysisData" />
+        <LineChart :chartData="dashboardStore.getCurrentTrendData()" />
       </div>
     </div>
     
@@ -51,7 +56,7 @@ const toggleTab = (tab: string) => {
       <div class="routes-container">
         <h2>发车路线</h2>
         <div class="routes-list">
-          <div class="route-item" v-for="route in deliveryRoutes" :key="route.id">
+          <div class="route-item" v-for="route in dashboardStore.routes" :key="route.id">
             <div class="route-info">
               <div class="route-name">{{ route.origin }}</div>
               <div class="route-arrow">→</div>
@@ -74,156 +79,3 @@ const toggleTab = (tab: string) => {
     </div>
   </div>
 </template>
-
-<style scoped lang="scss">
-.dashboard {
-  padding: 20px;
-}
-
-.page-title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 24px;
-}
-
-.stats-container {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-.charts-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  margin-bottom: 24px;
-}
-
-.chart-card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  
-  .chart-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    
-    h2 {
-      font-size: 16px;
-      font-weight: 500;
-    }
-    
-    .tab-buttons {
-      display: flex;
-      
-      button {
-        padding: 4px 12px;
-        background: none;
-        border: none;
-        cursor: pointer;
-        font-size: 14px;
-        color: var(--text-secondary);
-        
-        &.active {
-          color: var(--text-color);
-          font-weight: 500;
-        }
-      }
-    }
-  }
-}
-
-.bottom-container {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-}
-
-.routes-container, .notices-container {
-  background-color: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  
-  h2 {
-    font-size: 16px;
-    font-weight: 500;
-    margin-bottom: 16px;
-  }
-}
-
-.routes-list {
-  .route-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f0f0;
-    
-    &:last-child {
-      border-bottom: none;
-    }
-    
-    .route-info {
-      display: flex;
-      align-items: center;
-      
-      .route-name {
-        font-weight: 500;
-      }
-      
-      .route-arrow {
-        margin: 0 8px;
-        color: var(--text-secondary);
-      }
-    }
-    
-    .route-time {
-      color: var(--text-secondary);
-      font-size: 13px;
-    }
-  }
-}
-
-.notices-list {
-  .notice-item {
-    display: flex;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid #f0f0f0;
-    
-    &:last-child {
-      border-bottom: none;
-    }
-    
-    .notice-icon {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background-color: #e0e0e0;
-      margin-right: 12px;
-      
-      &.unread {
-        background-color: var(--primary-color);
-      }
-    }
-    
-    .notice-title {
-      font-weight: 500;
-    }
-  }
-}
-
-@media (max-width: 1024px) {
-  .stats-container {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .charts-container, .bottom-container {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
