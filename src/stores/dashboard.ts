@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { deliveryRoutes } from '../data/mockData'
 
 export const useDashboardStore = defineStore('dashboard', () => {
   // 周数据
